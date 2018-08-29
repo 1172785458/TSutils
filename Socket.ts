@@ -7,6 +7,11 @@ export type SocketMessage = {
 /** 创建Socket链接 */
 export default class Socket {
 
+    /**
+     * @author D-Team viva
+     * @date   2018/08/29
+     */
+
     /** 开启调试模式 */
     static readonly _debug: boolean = false;
     /** Socket实例对象 */
@@ -41,6 +46,8 @@ export default class Socket {
         this.socket.connect(host, port);
     }
     static connectByUrl(url: string): void {
+        // let _hp: string[] = url.split(':');
+        // this.connect(_hp[0], parseInt(_hp[1]));
         if (this.socket.connected) {
             return;
         }
