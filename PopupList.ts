@@ -2,6 +2,11 @@
 /**冒泡提示动画列表 */
 export class PopupList extends Laya.Sprite {
 
+    /**
+     * @author D-Team viva
+     * @date   2018/08/29
+     */
+
     /**显示列表 */
     private toList: Laya.Label[] = [];
     /**渐显结束点 */
