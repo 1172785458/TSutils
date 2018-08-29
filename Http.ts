@@ -1,6 +1,11 @@
 /** 通信接口 */
 export default class Http {
 
+    /**
+     * @author D-Team viva
+     * @date   2018/08/29
+     */
+
     /**创建请求 */
     private static httpRequest(url: string,
         data: any = null,
