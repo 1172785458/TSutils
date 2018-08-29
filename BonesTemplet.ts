@@ -1,6 +1,11 @@
 /** 创建骨骼动画模版管理类 */
 export default class BonesTemplet {
 
+    /**
+     * @author D-Team viva
+     * @date   2018/08/29
+     */
+
     /** 骨骼模板表 */
     private templetDict: { [key: string]: Laya.Templet } = {};
     /** 骨骼模板加载成功状态记录 */
