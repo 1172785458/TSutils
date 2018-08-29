@@ -2,6 +2,8 @@
 /**
  * 此文件为滤镜预设静态方法类
  *
+ * @author D-Team viva
+ * @date   2018/08/29
  */
 
 export default class Filter {
