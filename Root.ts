@@ -3,10 +3,13 @@
  * 实现了暂停功能，抖动屏幕功能，子循环管理功能
  *
  * 注：只使用静态方法
+ *
+ * @author D-Team viva
+ * @date   2018/08/29
  */
 
 /** 循环类接口 */
-export interface UpdateChild {
+interface UpdateChild {
     update(): void;
 }
 
