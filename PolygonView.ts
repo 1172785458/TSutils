@@ -1,6 +1,6 @@
 
 /** 图表配置数据 */
-type Point = {
+export type Point = {
     /** 比例值 */scale: number
     /** 外文本 */label: string
     /** 内文本 */text: string
@@ -18,7 +18,7 @@ export default class PolygonView extends Laya.Sprite {
 
     /**
      * @author D-Team viva
-     * @date   2018/08/27
+     * @date   2018/08/30
      */
 
     /** 外文本 */
@@ -45,6 +45,7 @@ export default class PolygonView extends Laya.Sprite {
     private shapePointShow: boolean;
     private shapeMaskLineShow: boolean;
     private polygonLineShow: boolean;
+    private fillLineShow: boolean;
     /** 绘制背景 */
     private circleQuality: number;
     private circleFillColor?: string;
@@ -52,6 +53,8 @@ export default class PolygonView extends Laya.Sprite {
     private circleLineWidth?: number;
     /** 绘制配色 */
     private shapeFillColor: string;
+    private shapeFillLineColor: string;
+    private shapeFillLineWidth: number;
     private shapeMaskLineColor: string;
     private shapeMaskLineWidth: number;
     private polygonLineColor: string;
@@ -66,7 +69,7 @@ export default class PolygonView extends Laya.Sprite {
      * @param radius 图表半径
      * @param pnts   配置数据列表
      */
-    constructor(radius: number, pnts: Point[]) {
+    constructor(radius: number, pnts?: Point[]) {
         super();
 
         this.mouseEnabled = false;
@@ -88,6 +91,7 @@ export default class PolygonView extends Laya.Sprite {
         this.shapeFillShow =
             this.polygonLineShow =
             this.shapePointShow =
+            this.fillLineShow =
             this.shapeMaskLineShow = true;
 
         this.circleQuality = 360;
@@ -96,6 +100,8 @@ export default class PolygonView extends Laya.Sprite {
         this.circleLineWidth = 1;
 
         this.shapeFillColor = '#0099FF';
+        this.shapeFillLineColor = '#0000FF';
+        this.shapeFillLineWidth = 1;
         this.polygonLineColor = '#0000FF';
         this.polygonLineWidth = 1;
         this.shapeMaskLineColor = '#CCCCCC';
@@ -104,7 +110,7 @@ export default class PolygonView extends Laya.Sprite {
         this.shapePointRadius = 4;
         this.shapePointColor = '#33CC33';
 
-        this.reset(pnts, radius);
+        pnts ? this.reset(pnts, this.radius) : (this.circleRadius = radius);
     }
 
     /** 销毁处理 */
@@ -148,7 +154,7 @@ export default class PolygonView extends Laya.Sprite {
             label.x += ox;
             label.y += oy;
         });
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
 
@@ -264,19 +270,19 @@ export default class PolygonView extends Laya.Sprite {
     /** 显示数据点 */
     showTextPoint(show: boolean): PolygonView {
         this.shapePointShow = show;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置提示点半径 */
     setTextPointRadius(radius: number): PolygonView {
         this.shapePointRadius = radius;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置提示点颜色 */
     setTextPointColor(color: string): PolygonView {
         this.shapePointColor = color;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置提示点大小&颜色 */
@@ -288,26 +294,26 @@ export default class PolygonView extends Laya.Sprite {
         if (show !== undefined) {
             this.shapePointShow = show;
         }
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
 
     /** 显示隐藏图表背景填充&线条 */
-    showCircle(fill: boolean): PolygonView {
-        this.shapeFillShow = fill;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+    showCircle(show: boolean): PolygonView {
+        this.shapeFillShow = show;
+        this.redraw();
         return this;
     }
     /** 设置绘制背景颜色 */
     setCircleColor(fillColor?: string): PolygonView {
         this.circleFillColor = fillColor;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置绘制背景线条粗细 */
     setCircleLineWidth(lineWidth: number): PolygonView {
         this.circleLineWidth = lineWidth;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置绘制背景线条 */
@@ -316,13 +322,13 @@ export default class PolygonView extends Laya.Sprite {
         if (lineWidth !== undefined) {
             this.circleLineWidth = lineWidth;
         }
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置绘制圆线框品质[ 36 - 180 ] */
     setCircleQuality(quality: number): PolygonView {
         this.circleQuality = quality;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置绘制背景配置色 */
@@ -337,26 +343,20 @@ export default class PolygonView extends Laya.Sprite {
             this.circleLineWidth = lineWidth;
         }
         this.circleQuality = quality;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
 
-    /** 设置图表填充颜色 */
-    setPolygonColor(color: string): PolygonView {
-        this.shapeFillColor = color;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
-        return this;
-    }
     /** 显示隐藏图表线框 */
     showPolygonLine(show: boolean): PolygonView {
         this.polygonLineShow = show;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置图表线框粗细 */
     setPolygonLineWidth(lineWidth: number): PolygonView {
         this.polygonLineWidth = lineWidth;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置图表线框颜色 */
@@ -368,20 +368,51 @@ export default class PolygonView extends Laya.Sprite {
         if (show !== undefined) {
             this.polygonLineShow = show;
         }
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
+        return this;
+    }
+
+    /** 显示隐藏图表线框 */
+    showFillLine(show: boolean): PolygonView {
+        this.fillLineShow = show;
+        this.redraw();
+        return this;
+    }
+    /** 设置图表填充颜色 */
+    setFillColor(color: string): PolygonView {
+        this.shapeFillColor = color;
+        this.redraw();
+        return this;
+    }
+    /** 设置图表线框粗细 */
+    setFillLineWidth(lineWidth: number): PolygonView {
+        this.shapeFillLineWidth = lineWidth;
+        this.redraw();
+        return this;
+    }
+    /** 设置图表线框颜色 */
+    setFillLine(lineColor: string, lineWidth?: number, show?: boolean): PolygonView {
+        this.shapeFillLineColor = lineColor;
+        if (lineWidth !== undefined) {
+            this.shapeFillLineWidth = lineWidth;
+        }
+        if (show !== undefined) {
+            this.fillLineShow = show;
+        }
+        this.redraw();
         return this;
     }
 
     /** 显示或隐藏分块线 */
     showMaskLine(show: boolean): PolygonView {
         this.shapeMaskLineShow = show;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置分块线粗细 */
     setMaskLineWidth(lineWidth: number): PolygonView {
         this.shapeMaskLineWidth = lineWidth;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
     /** 设置分块线颜色&粗细 */
@@ -393,7 +424,7 @@ export default class PolygonView extends Laya.Sprite {
         if (show !== undefined) {
             this.shapeMaskLineShow = show;
         }
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
         return this;
     }
 
@@ -429,6 +460,7 @@ export default class PolygonView extends Laya.Sprite {
     /** 刷新图表数据显示 */
     reset(pnts: Point[], radius?: number): void {
         if (radius !== undefined) this.circleRadius = radius;
+        if (pnts === undefined) return;
         //创建文本对象
         this.drawData = pnts;
         let length = pnts.length;
@@ -464,18 +496,18 @@ export default class PolygonView extends Laya.Sprite {
         this.scalePoints = this.getDrawPoints(pnts, rotation, 'text');
         this.shapePointXY = undefined;
         this.scalePointXY = undefined;
-        this.redraw(this.shapeFillShow, this.polygonLineShow);
+        this.redraw();
     }
 
     /** 重新绘制图表 */
-    private redraw(showCircleFill: boolean = true, showPolygonLine: boolean = true): void {
-        Laya.timer.callLater(this, this.onRedraw, [showCircleFill, showPolygonLine]);
+    private redraw(): void {
+        Laya.timer.callLater(this, this.onRedraw);
     }
-    private onRedraw(showCircleFill: boolean = true, showPolygonLine: boolean = true): void {
+    private onRedraw(): void {
         this.graphics.clear();
-        if (showCircleFill) this.drawCircle(this.circleRadius, this.circleFillColor, this.circleLineColor, this.circleLineWidth);
-        if (showPolygonLine) this.drawLine(this.shapePoints, this.polygonLineColor, this.polygonLineWidth);
-        this.drawPoly(this.scalePoints, this.shapeFillColor);
+        if (this.shapeFillShow) this.drawCircle(this.circleRadius, this.circleFillColor, this.circleLineColor, this.circleLineWidth);
+        if (this.polygonLineShow) this.drawLine(this.shapePoints, this.polygonLineColor, this.polygonLineWidth);
+        this.drawPoly(this.scalePoints, this.shapeFillColor, this.fillLineShow ? this.shapeFillLineColor : undefined, this.shapeFillLineWidth);
         if (this.shapeMaskLineShow) this.drawFillLine(this.scalePoints, this.shapeMaskLineColor, this.shapeMaskLineWidth);
         if (this.shapePointShow) this.drawPoint(this.scalePoints, this.shapePointColor);
     }
