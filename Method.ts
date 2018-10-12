@@ -1,173 +1,187 @@
+/** 点 */
+export type Point = { x: number, y: number }
 
-/** 常用方法函数：公式函数，转换函数
- * @author D-Team viva
- * @date   2018/08/29
+/** 求两线段是否相交并求出交叉点位置
+ * @param a 线段A第一个点
+ * @param b 线段A第二个点
+ * @param c 线段B第一个点
+ * @param d 线段B第二个点
+ * @return Point | false
+ # 求线段ab和线段cd交点p #
+    a    d
+   A \  /
+      \/p
+      /\
+   B /  \
+    c    b
  */
+export function CrossPoint(a: Point, b: Point, c: Point, d: Point): Point | false {
+    // 三角形abc 面积的2倍
+    let abc = (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
+    // 三角形abd 面积的2倍
+    let abd = (a.x - d.x) * (b.y - d.y) - (a.y - d.y) * (b.x - d.x);
 
-/** 转换以‘,’逗号隔开的字符串(只支持一维数据，不支持Object或数组) */
-export function S2A<T>(s: string): T[] {
-    if (s.length == 0) return [];
-    let c = ',';
-    let a = s.indexOf(c) >= 0 ? s.split(c) : [s];
-    let d: any[] = [];
-    a.forEach(t => {
-        if (t == 'true' || t == 'false') {
-            d.push(t);
-            return;
-        }
-        let n = parseInt(t);
-        if (isNaN(n)) {
-            c = t.charAt(0);
-            if (c == '"' || c == "'") {
-                d.push(t);
-            } else {
-                d.push(`"${t}"`);
-            }
-        } else {
-            d.push(t.indexOf('.') > 0 ? parseFloat(t) : parseInt(t));
-        }
-    });
-    return JSON.parse(`[${d.toString()}]`);
+    // 面积符号相同则两点在线段同侧,不相交 (对点在线段上的情况,本例当作不相交处理);
+    if ((abc * abd) >= 0) return false;
+
+    // 三角形cda 面积的2倍
+    let cda = (c.x - a.x) * (d.y - a.y) - (c.y - a.y) * (d.x - a.x);
+    // 三角形cdb 面积的2倍
+    // 注意: 这里有一个小优化.不需要再用公式计算面积,而是通过已知的三个面积加减得出.
+    let cdb = cda + abc - abd;
+    if ((cda * cdb) >= 0) return false;
+
+    //计算交点坐标
+    let t = cda / (abd - abc);
+    let dx = t * (b.x - a.x);
+    let dy = t * (b.y - a.y);
+    return {
+        x: a.x + dx,
+        y: a.y + dy
+    };
 }
 
-/** 排序数据(默认：由小到大)
- * @param mode  排序方式 （a: 升序 | d: 降序 | r: 随机）
- * @param prop  排序依据属性名
+/** 连连看游戏的寻路算法并返回路径折点集
+ * @param map 二维数组
+ * @param a 点A位置
+ * @param b 点B位置
+ * @return Point[] | false
+ # 求A点到B点的路径
+    |－|－|－|－|－|－|－|
+    |－|－|＃|口|口|Ａ|－|
+    |－|％|＆|口|－|－|－|
+    |－|－|－|口|％|－|－|
+    |－|Ｂ|口|口|＃|＆|－|
+    |－|－|－|－|－|－|－|
  */
-export function Sort(mode: SortMode = SortEnum.A, prop?: string | number) {
-    return function (a: any, b: any): number {
-        if (mode == SortEnum.D) {
-            if (prop == undefined) return b - a;
-            return b[prop] - a[prop];
-        } else if (mode == SortEnum.R) {
-            return Math.floor(Math.random() * 3) - 1;
-        }
-        if (prop == undefined) return a - b;
-        return a[prop] - b[prop];
+export function LinkLine(map: number[][], a: Point, b: Point): Point[] | false {
+    let av = map[a.x][a.y];
+    let bv = map[b.x][b.y];
+    map[a.x][a.y] = 0;
+    map[b.x][b.y] = 0;
+    //返回值
+    let pt = [{ ...a }, { ...b }];
+    //同行列
+    if (a.x == b.x && LinkVertical(map, a.y, b.y, a.x)) return pt;
+    if (a.y == b.y && LinkHorizontal(map, a.x, b.x, a.y)) return pt;
+    //三点连
+    if (LinkHorizontal(map, a.x, b.x, a.y) && LinkVertical(map, a.y, b.y, b.x)) {
+        pt.splice(1, 0, { x: b.x, y: a.y });
+        return pt;
     }
-}
-export type SortMode = 'a' | 'd' | 'r';
-export enum SortEnum { A = 'a', D = 'd', R = 'r' }
-
-/** 判断是否公式 */
-export function Formula(data: string | number): boolean {
-    if (typeof data === 'number') return false;
-    return (/[\+\*\-\^]+/).test(data);
-}
-
-/** 返回公式计算值 */
-export function Expression(props: any, formula: string | number): number {
-    if (typeof (formula) == 'number') return formula;
-    if (Formula(formula)) {
-        let value: any[] = [];
-        let key: string[] = [];
-        for (let prop in props) {
-            key.push(prop);
-            value.push(props[prop]);
-        }
-        let expression = new Function(...key, 'return ' + formula);
-        return expression(...value);
+    if (LinkHorizontal(map, a.x, b.x, b.y) && LinkVertical(map, a.y, b.y, a.x)) {
+        pt.splice(1, 0, { x: a.x, y: b.y });
+        return pt;
     }
-    return formula.indexOf('.') > 0 ? parseFloat(formula) : parseInt(formula);
+    //中四点
+    let vn = a.x < b.x ? 1 : -1;
+    let max = Math.abs(a.x - b.x);
+    for (let i = 1; i < max; i++) {
+        let x = a.x + vn * i;
+        if (map[a.y][x] > 0) break;
+        if (LinkVertical(map, a.y, b.y, x) && LinkHorizontal(map, b.x, x, b.y)) {
+            pt.splice(1, 0, { x: x, y: a.y }, { x: x, y: b.y });
+            return pt;
+        }
+    }
+    vn = a.y < b.y ? 1 : -1;
+    max = Math.abs(a.y - b.y);
+    for (let i = 1; i < max; i++) {
+        let y = a.y + vn * i;
+        if (map[y][a.x] > 0) break;
+        if (LinkHorizontal(map, a.x, b.x, y) && LinkVertical(map, b.y, y, b.x)) {
+            pt.splice(1, 0, { x: a.x, y: y }, { x: b.x, y: y });
+            return pt;
+        }
+    }
+    //外四点
+    vn = a.x < b.x ? 1 : -1;
+    max = map[0].length;
+    for (let i = 1; i < max; i++) {
+        let x = a.x - vn * i;
+        if (x < 0 || x >= max) break;
+        else if (map[a.y][x] > 0) break;
+        if (LinkVertical(map, a.y, b.y, x) && LinkHorizontal(map, b.x, x, b.y)) {
+            pt.splice(1, 0, { x: x, y: a.y }, { x: x, y: b.y });
+            return pt;
+        }
+    }
+    for (let i = 1; i < max; i++) {
+        let x = b.x + vn * i;
+        if (x < 0 || x >= max) break;
+        else if (map[b.y][x] > 0) break;
+        if (LinkVertical(map, a.y, b.y, x) && LinkHorizontal(map, a.x, x, a.y)) {
+            pt.splice(1, 0, { x: x, y: a.y }, { x: x, y: b.y });
+            return pt;
+        }
+    }
+    vn = a.y < b.y ? 1 : -1;
+    max = map.length;
+    for (let i = 1; i < max; i++) {
+        let y = a.y - vn * i;
+        if (y < 0 || y >= max) break;
+        else if (map[y][a.x] > 0) break;
+        if (LinkHorizontal(map, a.x, b.x, y) && LinkVertical(map, b.y, y, b.x)) {
+            pt.splice(1, 0, { x: a.x, y: y }, { x: b.x, y: y });
+            return pt;
+        }
+    }
+    for (let i = 1; i < max; i++) {
+        let y = b.y + vn * i;
+        if (y < 0 || y >= max) break;
+        else if (map[y][b.x] > 0) break;
+        if (LinkHorizontal(map, a.x, b.x, y) && LinkVertical(map, a.y, y, a.x)) {
+            pt.splice(1, 0, { x: a.x, y: y }, { x: b.x, y: y });
+            return pt;
+        }
+    }
+    //无效连
+    map[a.x][a.y] = av;
+    map[b.x][b.y] = bv;
+    return false;
 }
-
-/** 获取随机范围内的一个值 */
-export function Random(min: number, max: number, int?: boolean): number {
-    let value = max - min;
-    let rand = Math.random() * value;
-    value = min + (int ? Math.floor(rand) : rand);
-    return value;
+function LinkHorizontal(map: number[][], ax: number, bx: number, y: number): boolean {
+    let n = ax < bx ? 1 : -1;
+    let m = Math.abs(ax - bx);
+    for (let i = 0; i <= m; i++) {
+        let x = ax + n * i;
+        if (map[y][x] > 0) return false;
+    }
+    return true;
 }
-
-/** 复一个数据 */
-export function Clone(data: any): any {
-    let json = JSON.stringify(data);
-    return JSON.parse(json);
-}
-
-/** 毫秒转时间字符串（HH:MM:SS） */
-export function Clock(time: number, notHour: boolean = false, space: string = ':'): string {
-    let s = Math.floor(time / 1000);
-    let m = Math.floor(s / 60);
-    let h = Math.floor(m / 60);
-    let st = (s % 60).toString();
-    let z = '0';
-    if (st.length < 2) st = z + st;
-    let _mt = (m % 60).toString();
-    if (_mt.length < 2) _mt = z + _mt;
-    let _ht = (h % 60).toString();
-    if (_ht.length < 2) _ht = z + _ht;
-    return notHour ? `${_mt}${space}${st}` : `${_ht}${space}${_mt}${space}${st}`;
-}
-
-/** 倒计时间字符串 */
-export function Countdown(time: number, format: string = "D天H时M分S秒") {
-    let s = Math.max(0, time / 1000);
-    let d = Math.floor(s / 24 / 3600);
-    let h = Math.floor(s / 3600 % 24);
-    let m = Math.floor(s / 60 % 60);
-    s = Math.floor(s % 60);
-    let f = format.replace(/D/, d.toString());
-    f = f.replace(/H/, h.toString());
-    f = f.replace(/M/, m.toString());
-    f = f.replace(/S/, s.toString());
-    return f;
-}
-
-/** 求坐标点 a 指向坐标点 b 的移动偏移量 */
-export function Mobility(ax: number, ay: number, bx: number, by: number): Laya.Point {
-    let r = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
-    return MobilityBy(r);
-}
-
-/** 求指定角度的移动偏移量 */
-export function MobilityBy(rotation: number): Laya.Point {
-    let r = rotation * Math.PI / 180;
-    let x = Math.cos(r);
-    let y = Math.sin(r);
-    return new Laya.Point(x, y);
-}
-
-/** 求水平翻转情况下点 a 指向点 b 的旋转角度值 */
-export function Rotation(ax: number, ay: number, bx: number, by: number, flip?: boolean): number {
-    let f = flip ? -1 : 1;
-    let r = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
-    return (f == 1 ? r : -(180 % r)) * f;
-}
-
-/** 求水平翻转情况下对象 a 指向对象 b 的旋转角度值 */
-export function RotationBy(a: XY, b: XY, flip?: boolean): number {
-    return Rotation(a.x, a.y, b.x, b.y, flip);
-}
-export interface XY { x: number, y: number }
-
-/**随机数种子
- * seed 的值不变得出的随机值也不变，所以值入指定的 seed 值就能得到指定的随机值了。
- */
-export function RandomSeed(seed: number = 8, min?: number, max?: number): number {
-    let m = max || 1;
-    let n = min || 0;
-    let s = (seed * 9301 + 49297) % 233280;
-    var r = s / 233280;
-    return n + r * (m - n);
-}
-
-/**判断指定点是否在指定矩形范围内 */
-export function HitTest(x: number, y: number, rect: Laya.Rectangle): boolean {
-    if (x < rect.x || y < rect.y) return false;
-    let n = rect.x + rect.width;
-    if (x > n) return false;
-    n = rect.y + rect.height;
-    if (y > n) return false;
+function LinkVertical(map: number[][], ay: number, by: number, x: number): boolean {
+    let n = ay < by ? 1 : -1;
+    let m = Math.abs(ay - by);
+    for (let i = 0; i <= m; i++) {
+        let y = ay + n * i;
+        if (map[y][x] > 0) return false;
+    }
     return true;
 }
 
-/**获取区间值中任意一个值 */
-export function Range(data: string, space: string = '-', float?: boolean): number {
-    let f = float ? parseFloat : parseInt;
-    if (data.indexOf(space) > 0) {
-        let a = data.split(space);
-        return f(a[0]) + Math.floor(Math.random() * (f(a[1]) + 1 - f(a[0])));
+/** 二维数组点路线转换为具体详细路线 */
+export function Line2Point(ps: Point[]): Point[] {
+    let pt: Point[] = [];
+    let max = ps.length;
+    for (let i = 1; i < max; i++) {
+        let a = ps[i - 1];
+        let b = ps[i];
+        if (a.x == b.x) {
+            let n = a.y < b.y ? 1 : -1;
+            let m = Math.abs(a.y - b.y);
+            for (let j = 0; j < m; j++) {
+                let y = a.y + n * j;
+                pt.push({ x: a.x, y: y });
+            }
+        } else {
+            let n = a.x < b.x ? 1 : -1;
+            let m = Math.abs(a.x - b.x);
+            for (let j = 0; j < m; j++) {
+                let x = a.x + n * j;
+                pt.push({ x: x, y: a.y });
+            }
+        }
     }
-    return f(data);
+    pt.push({ ...ps[max - 1] });
+    return pt;
 }
