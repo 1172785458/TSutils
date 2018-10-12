@@ -1,8 +1,45 @@
+import { saveAs } from "file-saver";
+/** 本地文件保存
+ * @param data      保存内容
+ * @param filename  文件名
+ * 注：使用 npm install file-saver 安装支持库才可使用
+ */
+export function SaveFile(data: any | string, filename: string): void {
+    var f: File = new File([typeof (data) == 'string' ? data : JSON.stringify(data)], filename, { type: "text/plain;charset=utf-8" });
+    saveAs(f);
+}
 
 /**
  * @author D-Team viva
  * @date   2018/10/12
  */
+
+/**
+* 本地临时数据存储，当浏览器关闭时自动清空。
+*/
+/**存储对象 */
+let SessionStorage: any = Laya.Browser.window.sessionStorage;
+/**存储数据KEY表 */
+let SessionDictionary: { [key: string]: boolean } = {};
+/**保存数据到存储对象 */
+export function SetSession(key: string, data: any): void {
+    SessionDictionary[key] = true;
+    SessionStorage[key] = data;
+}
+/**从存储对象中获取数据 */
+export function GetSession(key: string): any {
+    return SessionStorage[key];
+}
+/**删除存储对象中指定KEY的数据，当 KEY 为 undefined 时清空所有存储数据 */
+export function ClearSession(key?: string): void {
+    if (key === undefined) {
+        for (let _z in SessionDictionary) ClearSession(_z);
+    } else {
+        SessionStorage[key] = undefined;
+        delete SessionStorage[key];
+        delete SessionDictionary[key];
+    }
+}
 
 /** 点 */
 export type Point = { x: number, y: number }
@@ -252,14 +289,14 @@ export function Expression(props: { [key: string]: any }, formula: string | numb
         return formula;
     }
     if (Formula(formula)) {
-        let value: any[] = [];
-        let key: string[] = [];
+        let v: any[] = [];
+        let a: string[] = [];
         for (let prop in props) {
-            key.push(prop);
-            value.push(props[prop]);
+            a.push(prop);
+            v.push(props[prop]);
         }
-        let expression = new Function(...key, 'return ' + formula);
-        return expression(...value);
+        let expression = new Function(...a, 'return ' + formula);
+        return expression(...v);
     }
     return formula.indexOf('.') > 0 ? parseFloat(formula) : parseInt(formula);
 }
@@ -278,16 +315,16 @@ export function Replace(data: string, ...params: any[]) {
 
 /** 获取随机范围内的一个值 */
 export function Random(min: number, max: number, toMath: Function = Math.round): number {
-    let range = max - min;
-    let rand = Math.random() * range;
-    range = min + toMath(rand);
-    return range;
+    let n = max - min;
+    let r = Math.random() * n;
+    n = min + toMath(r);
+    return n;
 }
 
 /** 复一个数据 */
 export function Clone<T>(data: T): T {
-    let json = JSON.stringify(data);
-    return JSON.parse(json);
+    let d = JSON.stringify(data);
+    return JSON.parse(d);
 }
 
 /** 返回浏览器类型 */
@@ -320,23 +357,13 @@ type BrowerType = null | "ie" | "firefox" | "uc" | "360" | "baidu" | "chrome" | 
  * @param decimal : boolean  带小数
  */
 export function NumberInputReturn(text: string, max: number, decimal?: boolean): string {
-    let len: number = text.length;
-    if (len == 0) return text;
-
-    let idx: number = len - 1;
-    if (decimal && text.charAt(idx) == '.') return text;
-
-    let val: number = decimal ? parseFloat(text) : parseInt(text);
-    if (val > max) {
-        if (decimal) {
-            let num: number = val % 1;
-            val = max + num;
-        } else {
-            val = max;
-        }
-    }
-
-    return val.toString();
+    let l = text.length;
+    if (l == 0) return text;
+    let i = l - 1;
+    if (decimal && text.charAt(i) == '.') return text;
+    let n = decimal ? parseFloat(text) : parseInt(text);
+    if (n > max) n = decimal ? (max + n % 1) : max;
+    return n.toString();
 }
 
 /** 载入ttf字体
@@ -353,18 +380,18 @@ export function LoadTTF(url: string, fontName: string = 'TTF', deadText: string 
     }
     //standard H5
     else {
-        let css = `@font-face { font-family: ${fontName}; src: url(${url}) format('truetype'); }`;
-        let style = document.createElement('style');
-        style.type = 'text/css';
-        style.innerHTML = css;
-        document.head.appendChild(style);
+        let c = `@font-face { font-family: ${fontName}; src: url(${url}) format('truetype'); }`;
+        let s = document.createElement('style');
+        s.type = 'text/css';
+        s.innerHTML = c;
+        document.head.appendChild(s);
         //缓存激活TTF字体
-        let cache = new Laya.Text();
-        cache.font = fontName;
-        cache.text = deadText;
-        cache.fontSize = 1;
-        cache.pos(-1, -1);
-        Laya.stage.addChild(cache);
+        let t = new Laya.Text();
+        t.font = fontName;
+        t.text = deadText;
+        t.fontSize = 1;
+        t.pos(-1, -1);
+        Laya.stage.addChild(t);
     }
 }
 
@@ -378,45 +405,20 @@ export function FormatTime(value: string | number, format: string = 'MM-DD hh:mm
     let n: number;
     if (typeof (value) == 'string') {
         n = parseInt(value);
-        if (isNaN(n)) {
-            n = new Date(value).getTime();
-        }
-    } else {
-        n = value;
-    }
+        if (isNaN(n)) n = new Date(value).getTime();
+    } else n = value;
     let d = new Date(n);
-    let f = format.replace('Y', d.getFullYear().toString());
-    if ((/MM/).test(f)) {
-        let mm = d.getMonth();
-        f = f.replace('MM', mm < 10 ? `0${mm}` : mm.toString());
-    } else {
-        f = f.replace('M', d.getMonth().toString());
-    }
-    if ((/DD/).test(f)) {
-        let dd = d.getDate();
-        f = f.replace('DD', dd < 10 ? `0${dd}` : dd.toString());
-    } else {
-        f = f.replace('D', d.getDate().toString());
-    }
-    if ((/hh/).test(f)) {
-        let hh = d.getHours();
-        f = f.replace('hh', hh < 10 ? `0${hh}` : hh.toString());
-    } else {
-        f = f.replace('h', d.getHours().toString());
-    }
-    if ((/mm/).test(f)) {
-        let mm = d.getMinutes();
-        f = f.replace('mm', mm < 10 ? `0${mm}` : mm.toString());
-    } else {
-        f = f.replace('m', d.getMinutes().toString());
-    }
-    if ((/ss/).test(f)) {
-        let ss = d.getSeconds();
-        f = f.replace('ss', ss < 10 ? `0${ss}` : ss.toString());
-    } else {
-        f = f.replace('s', d.getSeconds().toString());
-    }
-    return f;
+    let t = format.replace('Y', d.getFullYear().toString());
+    t = ReplaceTime(/MM/, t, 'M', d.getMonth());
+    t = ReplaceTime(/DD/, t, 'D', d.getDate());
+    t = ReplaceTime(/hh/, t, 'h', d.getHours());
+    t = ReplaceTime(/mm/, t, 'm', d.getMinutes());
+    t = ReplaceTime(/ss/, t, 's', d.getSeconds());
+    return t;
+}
+function ReplaceTime(reg: RegExp, str: string, rep: string, val: number): string {
+    if (reg.test(str)) return str.replace(reg, val < 10 ? `0${val}` : val.toString());
+    return str.replace(rep, val.toString());
 }
 
 /** 倒计时格式化时间戳
@@ -426,42 +428,48 @@ export function FormatTime(value: string | number, format: string = 'MM-DD hh:mm
                              （例2：D天hh时mm分ss秒 输出 4天09时25分05秒）
  */
 export function RemainTime(value: number, format: string = 'hh:mm:ss'): string {
-    let s = value / 1000;
+    let s = Math.floor(value / 1000);
     let m = Math.floor(s / 60);
     let h = Math.floor(m / 60);
     let d = Math.floor(h / 24);
     s = s % 60;
     m = m % 60;
     h = h % 24;
-    let f = format.replace('D', d.toString());
-    if ((/hh/).test(f)) {
-        let hh = h;
-        f = f.replace('hh', hh < 10 ? `0${hh}` : hh.toString());
-    } else {
-        f = f.replace('h', h.toString());
-    }
-    if ((/mm/).test(f)) {
-        let mm = m;
-        f = f.replace('mm', mm < 10 ? `0${mm}` : mm.toString());
-    } else {
-        f = f.replace('m', m.toString());
-    }
-    if ((/ss/).test(f)) {
-        let ss = s;
-        f = f.replace('ss', ss < 10 ? `0${ss}` : ss.toString());
-    } else {
-        f = f.replace('s', s.toString());
-    }
-    return f;
+    let t = format.replace('D', d.toString());
+    t = ReplaceTime(/hh/, t, 'h', h);
+    t = ReplaceTime(/mm/, t, 'm', m);
+    t = ReplaceTime(/ss/, t, 's', s);
+    return t;
 }
 
 /**随机数种子
  * seed 的值不变得出的随机值也不变，所以值入指定的 seed 值就能得到指定的随机值了。
  */
 export function RandomSeed(seed: number = 8, min?: number, max?: number): number {
-    let _max = max || 1;
-    let _min = min || 0;
-    let _seed = (seed * 9301 + 49297) % 233280;
-    let _rnd = _seed / 233280;
-    return _min + _rnd * (_max - _min);
+    let m = max || 1;
+    let n = min || 0;
+    let s = (seed * 9301 + 49297) % 233280;
+    let r = s / 233280;
+    return n + r * (m - n);
+}
+
+/** 求坐标点 a 指向坐标点 b 的移动偏移量 */
+export function Offset(ax: number, ay: number, bx: number, by: number): Point {
+    let r = Math.atan2(by - ay, bx - ax);
+    let x = Math.cos(r);
+    let y = Math.sin(r);
+    return { x: x, y: y };
+}
+export function OffsetBy(a: Point, b: Point): Point {
+    return Offset(a.x, a.y, b.x, b.y);
+}
+
+/** 求水平翻转情况下点 a 指向点 b 的旋转角度值 */
+export function Rotation(ax: number, ay: number, bx: number, by: number, flip?: boolean): number {
+    let f = flip ? -1 : 1;
+    let r = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
+    return (f == 1 ? r : -(180 % r)) * f;
+}
+export function RotationBy(a: Point, b: Point, flip?: boolean): number {
+    return Rotation(a.x, a.y, b.x, b.y, flip);
 }
