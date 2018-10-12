@@ -27,9 +27,7 @@ export function SetSession(key: string, data: any): void {
     SessionStorage[key] = data;
 }
 /**从存储对象中获取数据 */
-export function GetSession(key: string): any {
-    return SessionStorage[key];
-}
+export function GetSession(key: string): any { return SessionStorage[key]; }
 /**删除存储对象中指定KEY的数据，当 KEY 为 undefined 时清空所有存储数据 */
 export function ClearSession(key?: string): void {
     if (key === undefined) {
@@ -243,11 +241,8 @@ export function S2A<T>(s: string): T[] {
         let n = parseInt(t);
         if (isNaN(n)) {
             c = t.charAt(0);
-            if (c == '"' || c == "'") {
-                d.push(t);
-            } else {
-                d.push(`"${t}"`);
-            }
+            if (c == '"' || c == "'") d.push(t);
+            else d.push(`"${t}"`);
         } else {
             d.push(t.indexOf('.') > 0 ? parseFloat(t) : parseInt(t));
         }
@@ -285,9 +280,7 @@ export function Formula(data: string | number): boolean {
  * @param formula 算术公式或纯数值
  */
 export function Expression(props: { [key: string]: any }, formula: string | number): number {
-    if (typeof (formula) == 'number') {
-        return formula;
-    }
+    if (typeof (formula) == 'number') return formula;
     if (Formula(formula)) {
         let v: any[] = [];
         let a: string[] = [];
@@ -295,8 +288,8 @@ export function Expression(props: { [key: string]: any }, formula: string | numb
             a.push(prop);
             v.push(props[prop]);
         }
-        let expression = new Function(...a, 'return ' + formula);
-        return expression(...v);
+        let e = new Function(...a, 'return ' + formula);
+        return e(...v);
     }
     return formula.indexOf('.') > 0 ? parseFloat(formula) : parseInt(formula);
 }
@@ -307,9 +300,7 @@ export function Expression(props: { [key: string]: any }, formula: string | numb
  * "name:小李  age:14"
 */
 export function Replace(data: string, ...params: any[]) {
-    params.forEach((value, key) => {
-        data = data.replace(`{${key}}`, value);
-    });
+    params.forEach((value, key) => { data = data.replace(`{${key}}`, value); });
     return data;
 }
 
@@ -317,15 +308,11 @@ export function Replace(data: string, ...params: any[]) {
 export function Random(min: number, max: number, toMath: Function = Math.round): number {
     let n = max - min;
     let r = Math.random() * n;
-    n = min + toMath(r);
-    return n;
+    return min + toMath(r);
 }
 
 /** 复一个数据 */
-export function Clone<T>(data: T): T {
-    let d = JSON.stringify(data);
-    return JSON.parse(d);
-}
+export function Clone<T>(data: T): T { return JSON.parse(JSON.stringify(data)); }
 
 /** 返回浏览器类型 */
 export function Browser(): BrowerType {
@@ -377,22 +364,21 @@ export function LoadTTF(url: string, fontName: string = 'TTF', deadText: string 
     if (window["conch"]) {
         let ttf: ArrayBuffer = Laya.loader.getRes(url);
         window["conch"].setFontFaceFromBuffer(fontName, ttf);
+        return;
     }
     //standard H5
-    else {
-        let c = `@font-face { font-family: ${fontName}; src: url(${url}) format('truetype'); }`;
-        let s = document.createElement('style');
-        s.type = 'text/css';
-        s.innerHTML = c;
-        document.head.appendChild(s);
-        //缓存激活TTF字体
-        let t = new Laya.Text();
-        t.font = fontName;
-        t.text = deadText;
-        t.fontSize = 1;
-        t.pos(-1, -1);
-        Laya.stage.addChild(t);
-    }
+    let c = `@font-face { font-family: ${fontName}; src: url(${url}) format('truetype'); }`;
+    let s = document.createElement('style');
+    s.type = 'text/css';
+    s.innerHTML = c;
+    document.head.appendChild(s);
+    //缓存激活TTF字体
+    let t = new Laya.Text();
+    t.font = fontName;
+    t.text = deadText;
+    t.fontSize = 1;
+    t.pos(-1, -1);
+    Laya.stage.addChild(t);
 }
 
 /** 格式化时间字符串
@@ -460,9 +446,7 @@ export function Offset(ax: number, ay: number, bx: number, by: number): Point {
     let y = Math.sin(r);
     return { x: x, y: y };
 }
-export function OffsetBy(a: Point, b: Point): Point {
-    return Offset(a.x, a.y, b.x, b.y);
-}
+export function OffsetBy(a: Point, b: Point): Point { return Offset(a.x, a.y, b.x, b.y); }
 
 /** 求水平翻转情况下点 a 指向点 b 的旋转角度值 */
 export function Rotation(ax: number, ay: number, bx: number, by: number, flip?: boolean): number {
@@ -470,6 +454,4 @@ export function Rotation(ax: number, ay: number, bx: number, by: number, flip?: 
     let r = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
     return (f == 1 ? r : -(180 % r)) * f;
 }
-export function RotationBy(a: Point, b: Point, flip?: boolean): number {
-    return Rotation(a.x, a.y, b.x, b.y, flip);
-}
+export function RotationBy(a: Point, b: Point, flip?: boolean): number { return Rotation(a.x, a.y, b.x, b.y, flip); }
