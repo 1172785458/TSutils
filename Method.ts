@@ -1,3 +1,9 @@
+
+/**
+ * @author D-Team viva
+ * @date   2018/10/12
+ */
+
 /** 点 */
 export type Point = { x: number, y: number }
 
