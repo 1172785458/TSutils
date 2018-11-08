@@ -7,9 +7,18 @@ let dialogs: { [key: string]: UI } = {};
 
 /** 销毁无用对象池UI */
 export function destroy(key: string) {
-    if (dialogs[key]) {
-        dialogs[key].destroy();
-        delete dialogs[key];
+    let ui = dialogs[key];
+    if (ui) {
+        if (ui.popup) {
+            ui.close();
+            ui.onClosed = () => {
+                dialogs[key].destroy();
+                delete dialogs[key];
+            };
+        } else {
+            dialogs[key].destroy();
+            delete dialogs[key];
+        }
     }
 }
 
