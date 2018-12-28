@@ -57,7 +57,8 @@ export function bitmapFont(font: string, text: string, width: number, emojiPath:
         let t = c.length > 1 ? Laya.loader.getRes(c) : bf.getCharTexture(c);
         if (!t) {
             console.log('unfind', c);
-            return;
+            t = bf.getCharTexture('?');
+            if (!t) return;
         }
         let x = sx;
         sx += t.sourceWidth;
@@ -147,7 +148,7 @@ export function labelFont(style: RegExpStyle, text: string, width: number, emoji
         let t: Laya.Texture | Laya.Label = c.length > 1 ? Laya.loader.getRes(c) : charLabel(style, c, i);
         if (!t) {
             console.log('unfind texture', c);
-            return;
+            t = charLabel(style, '?', i);
         }
         let tw = t instanceof Laya.Texture ? t.sourceWidth : t.width;
         let th = t instanceof Laya.Texture ? t.sourceHeight : t.height;
