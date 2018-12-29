@@ -192,6 +192,5 @@ export function labelFont(style: RegExpStyle, text: string, width: number, emoji
     }
     sp.width = ew;
     sp.height = y + h;
-    sp.cacheAs = 'normal';
     return sp;
 }
